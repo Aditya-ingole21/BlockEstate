@@ -5,37 +5,59 @@ import "forge-std/Test.sol";
 import "../src/token/PropertyNFT.sol";
 
 contract PropertyNFTTest is Test {
-    PropertyNFT propertyNFT;
-    address owner = address(0x1);
-    address user = address(0x2);
+    PropertyNFT nft;
+    address owner;
+    address user1;
+    address user2;
 
     function setUp() public {
-        vm.startPrank(owner);
-        propertyNFT = new PropertyNFT();
-        vm.stopPrank();
+        owner = address(this);
+        user1 = makeAddr("user1");
+        user2 = makeAddr("user2");
+        nft = new PropertyNFT();
     }
 
-    function testMintProperty() public {
-        vm.startPrank(owner);
-        uint256 tokenId = propertyNFT.mintProperty(user, "ipfs://test-hash");
-        assertEq(tokenId, 0);
-        assertEq(propertyNFT.ownerOf(0), user);
-        assertEq(propertyNFT.getPropertyMetadata(0), "ipfs://test-hash");
-        vm.stopPrank();
+    function test_OwnerCanMint() public {
+        uint256 newTokenId = nft.mintProperty(user1, "ipfs://hash1");
+        assertEq(newTokenId, 0);
+        assertEq(nft.ownerOf(newTokenId), user1);
+        assertEq(nft.getPropertyMetadata(newTokenId), "ipfs://hash1");
+        assertEq(nft.tokenCounter(), 1);
     }
 
-    function testFailMintByNonOwner() public {
-        vm.startPrank(user);
-        vm.expectRevert("Ownable: caller is not the owner");
-        propertyNFT.mintProperty(user, "ipfs://test-hash");
-        vm.stopPrank();
+    function test_RevertWhen_NonOwnerMints() public {
+        vm.prank(user1);
+        vm.expectRevert();
+        nft.mintProperty(user1, "ipfs://hash1");
     }
 
-    function testUpdateMetadata() public {
-        vm.startPrank(owner);
-        propertyNFT.mintProperty(user, "ipfs://test-hash");
-        propertyNFT.updateMetadata(0, "ipfs://new-hash");
-        assertEq(propertyNFT.getPropertyMetadata(0), "ipfs://new-hash");
-        vm.stopPrank();
+    function test_OwnerCanUpdateMetadata() public {
+        uint256 tokenId = nft.mintProperty(user1, "ipfs://hash1");
+        nft.updateMetadata(tokenId, "ipfs://hash2");
+        assertEq(nft.getPropertyMetadata(tokenId), "ipfs://hash2");
+    }
+
+    function test_RevertWhen_UpdateNonexistentToken() public {
+        vm.expectRevert("Token does not exist");
+        nft.updateMetadata(999, "ipfs://newHash");
+    }
+
+    function test_RevertWhen_GetMetadataNonexistentToken() public {
+        vm.expectRevert("Token does not exist");
+        nft.getPropertyMetadata(999);
+    }
+
+    function test_TokenCounterIncrements() public {
+        nft.mintProperty(user1, "ipfs://hash1");
+        nft.mintProperty(user2, "ipfs://hash2");
+        nft.mintProperty(user1, "ipfs://hash3");
+        assertEq(nft.tokenCounter(), 3);
+    }
+
+    function test_CanTransferNFT() public {
+        uint256 tokenId = nft.mintProperty(user1, "ipfs://hash1");
+        vm.prank(user1);
+        nft.transferFrom(user1, user2, tokenId);
+        assertEq(nft.ownerOf(tokenId), user2);
     }
 }

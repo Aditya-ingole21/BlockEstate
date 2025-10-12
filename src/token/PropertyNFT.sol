@@ -8,7 +8,7 @@ contract PropertyNFT is ERC721, Ownable {
     uint256 public tokenCounter;
     mapping(uint256 => string) public propertyMetadata; // IPFS hash for metadata
 
-    constructor() ERC721("BlockEstate", "BEST") Ownable(msg.sender) {
+    constructor() ERC721("BlockEstate", "BEST") Ownable() {
         tokenCounter = 0;
     }
 
