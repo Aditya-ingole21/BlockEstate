@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IPropertyNFT.sol";  // Import the interface
+import "../interfaces/IPropertyNFT.sol";  // Import the interface;
 
 contract Escrow is Ownable {
     address public buyer;
